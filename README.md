@@ -1,4 +1,4 @@
 # Fish-Mod
 Fun fish mod for balatro.
 
-written by Omnilax
+written by Omnilax :trollface:
