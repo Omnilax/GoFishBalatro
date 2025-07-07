@@ -30,6 +30,16 @@ SMODS.current_mod.config_tab = function()
                         ref_value = "moddedjokers",
                         callback = function(_set_toggle)
                             config.moddedjokers = _set_toggle
+                            -- if _set_toggle then
+                            --     update_modded_jokers() -- Initialize modded jokers
+                            -- else
+                            --     -- Remove all modded jokers from the pool
+                            --     for key, joker in pairs(SMODS.Joker or {}) do
+                            --         if joker["rarity"] == "AC_Fish" then
+                            --             SMODS.Joker[key] = nil -- Remove the joker from the pool
+                            --         end
+                            --     end
+                            -- end
                         end,
                     })
                 }
@@ -38,13 +48,7 @@ SMODS.current_mod.config_tab = function()
     }
 end
 
-function toggle_modded_jokers()
-    if config.moddedjokers == true then
-        -- enable modded jokers
-    else
-        -- disable modded jokers
-    end
-end
+-- end
 
 -- Load sprite atlas
 SMODS.Atlas {
@@ -77,7 +81,7 @@ SMODS.Rarity {
     badge_colour = SMODS.Gradient {
         key = "fish_gradient",
         colours = { HEX("2F5B25"), HEX("256EBC") }, -- Shifts between two shades of green
-        cycle = 10,                                 -- Takes 10 seconds to complete a full cycle
+        cycle = 12,                                 -- Takes 10 seconds to complete a full cycle
         interpolation = "trig"                      -- Uses a smooth sine wave transition
     },
     default_weight = 0,
@@ -85,7 +89,8 @@ SMODS.Rarity {
 }
 
 -- JOKERS START HERE
-if config.moddedjokers == true then
+-- if config.moddedjokers == true then
+function setup_jokers()
     SMODS.Joker {
         key = 'Smelt',
         loc_txt = {
@@ -650,11 +655,68 @@ if config.moddedjokers == true then
 
 
 
+    SMODS.Joker {
+        key = "RanchuGoldfish",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 4,
+        pos = { x = 1, y = 1 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
 
+        config = { extra = { dollars = 1 } },
 
+        loc_txt = {
+            name = "Ranchu Goldfish",
+            text = {
+                "Gain {C:money}$1{} when {C:attention}Face{} cards",
+                "are scored"
+            }
+        },
 
+        loc_vars = function(self, info_queue, card)
+            return {
+                vars = { card.ability.extra.dollars or 1 }
+            }
+        end,
 
+        calculate = function(self, card, context)
+            if context.individual and context.cardarea == G.play and context.other_card:is_face() then
+                G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + card.ability.extra.dollars
 
+                return {
+                    dollars = card.ability.extra.dollars,
+                    func = function()
+                        G.E_MANAGER:add_event(Event({
+                            func = function()
+                                G.GAME.dollar_buffer = 0
+                                return true
+                            end
+                        }))
+                    end
+                }
+            end
+        end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end,
+
+        in_pool = function(self)
+            return true
+        end
+    }
 
 
 
@@ -1639,19 +1701,30 @@ if config.moddedjokers == true then
         discovered = true,
         blueprint_compat = true,
 
+        config = { extra = { odds = 4 } },
+
         loc_txt = {
             name = "Mud Crab",
             text = {
-                "Gain a random {C:attention}tag{} when you",
-                "play a {C:attention}Two Pair{}"
+                "{C:green}#1# in #2#{}, chance to gain a random {C:attention}tag{}",
+                "when you play a {C:attention}Two Pair{}"
             }
         },
+
+        loc_vars = function(self, info_queue, card)
+            return {
+                vars = {
+                    tostring(G.GAME and G.GAME.probabilities.normal or 1),
+                    tostring(card.ability.extra.odds or 4)
+                }
+            }
+        end,
 
         calculate = function(self, card, context)
             if context.joker_main
                 and context.scoring_name == "Two Pair"
-                and context.poker_hands and next(context.poker_hands["Two Pair"]) then
-                -- Defer tag addition for smoother timing
+                and context.poker_hands and next(context.poker_hands["Two Pair"])
+                and pseudorandom("mudcrab_trigger") < ((G.GAME.probabilities.normal or 1) / (card.ability.extra.odds or 4)) then
                 G.E_MANAGER:add_event(Event({
                     trigger = 'after',
                     delay = 0.4,
@@ -1667,7 +1740,7 @@ if config.moddedjokers == true then
                         local tag = Tag(tag_key)
                         if tag.name == "Orbital Tag" then
                             local _poker_hands = {}
-                            for k, v in pairs(G.GAME.hands) do
+                            for k, v in pairs(G.GAME.hands or {}) do
                                 if v.visible then
                                     _poker_hands[#_poker_hands + 1] = k
                                 end
@@ -2092,7 +2165,7 @@ if config.moddedjokers == true then
 
         calculate = function(self, card, context)
             if context.first_hand_drawn then
-                local _card = SMODS.create_card { set = "Base", enhancement = "m_mult", rank = "King", edition = "e_holo", area = G.discard }
+                local _card = SMODS.add_card { set = "Base", enhancement = "m_mult", rank = "King", edition = "e_holo", area = G.discard }
 
                 G.E_MANAGER:add_event(Event({
                     func = function()
@@ -3199,6 +3272,74 @@ if config.moddedjokers == true then
         in_pool = function(self) return true end
     }
 
+    -- Seahorse
+
+
+    SMODS.Joker {
+        key = "Seahorse",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 8,
+        pos = { x = 6, y = 3 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
+
+        config = { extra = { mult = 0, mult_gain = 3 } },
+
+        loc_txt = {
+            name = "Seahorse",
+            text = {
+                "Gains {C:mult}+3 mult{} whenever a {C:attention}3{} is scored",
+                "{C:inactive}Currently {C:mult}+#1#{}"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            return {
+                vars = {
+                    string.format("%d", card.ability and card.ability.extra and card.ability.extra.mult or 0)
+                }
+            }
+        end,
+
+        calculate = function(self, card, context)
+            if context.individual and context.cardarea == G.play
+                and context.other_card:get_id() == 3 and not context.blueprint then
+                card.ability.extra.mult = card.ability.extra.mult + card.ability.extra.mult_gain
+
+                return {
+                    message = localize('k_upgrade_ex'),
+                    colour = G.C.MULT,
+                    message_card = card
+                }
+            end
+
+            if context.joker_main then
+                return {
+                    mult = card.ability.extra.mult
+                }
+            end
+        end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end,
+
+        in_pool = function(self)
+            return true
+        end
+    }
 
 
     -- Clownfish
@@ -3355,9 +3496,549 @@ if config.moddedjokers == true then
             end
         end
     }
+
+
+
+    -- Saddled Bichir
+
+
+    SMODS.Joker {
+        key = "SaddledBichir",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 5,
+        pos = { x = 3, y = 5 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
+
+        config = { extra = { repetitions = 2, target_hand = "Three of a Kind" } },
+
+        loc_txt = {
+            name = "Saddled Bichir",
+            text = {
+                "Retriggers the {C:attention}second card{} scored {C:attention}2{} times",
+                "if hand contains {C:attention}Three of a Kind{}"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            return {
+                vars = {
+                    localize(card.ability.extra.target_hand, "poker_hands")
+                }
+            }
+        end,
+
+        calculate = function(self, card, context)
+            if context.repetition
+                and context.cardarea == G.play
+                and context.scoring_hand
+                and next(context.poker_hands[card.ability.extra.target_hand])
+                and context.other_card == context.scoring_hand[2] then
+                return {
+                    repetitions = card.ability.extra.repetitions
+                }
+            end
+        end,
+
+        in_pool = function(self)
+            return true
+        end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end
+    }
+    -- Ocean Sunfish
+    SMODS.Joker {
+        key = "OceanSunfish",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 4,
+        pos = { x = 0, y = 4 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
+
+        config = {
+            extra = {
+                xmult = 3,
+                poker_hand = "Flush Five"
+            }
+        },
+
+        loc_txt = {
+            name = "Ocean Sunfish",
+            text = {
+                "Gain {X:mult,C:white}X#1#{} mult when",
+                "playing a {C:attention}#2#{}"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            return {
+                vars = {
+                    card.ability.extra.xmult,
+                    localize(card.ability.extra.poker_hand, "poker_hands")
+                }
+            }
+        end,
+
+        calculate = function(self, card, context)
+            if context.joker_main
+                and context.poker_hands
+                and next(context.poker_hands[card.ability.extra.poker_hand]) then
+                return {
+                    xmult = card.ability.extra.xmult
+                }
+            end
+        end,
+
+        in_pool = function(self)
+            return true
+        end
+    }
+
+
+    -- Oarfish
+
+    SMODS.Joker {
+        key = "OarFish",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 4,
+        pos = { x = 1, y = 4 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
+
+        config = {
+            extra = {
+                xmult = 3,
+                poker_hand = "Straight Flush"
+            }
+        },
+
+        loc_txt = {
+            name = "Oar Fish",
+            text = {
+                "Gain {X:mult,C:white}X#1#{} mult when",
+                "playing a {C:attention}#2#{}"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            return {
+                vars = {
+                    card.ability.extra.xmult,
+                    localize(card.ability.extra.poker_hand, "poker_hands")
+                }
+            }
+        end,
+
+        calculate = function(self, card, context)
+            if context.joker_main
+                and context.poker_hands
+                and next(context.poker_hands[card.ability.extra.poker_hand]) then
+                return {
+                    xmult = card.ability.extra.xmult
+                }
+            end
+        end,
+
+        in_pool = function(self)
+            return true
+        end
+    }
+
+    -- Pike
+
+
+    SMODS.Joker {
+        key = "Pike",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 4,
+        pos = { x = 9, y = 6 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
+
+        config = {
+            extra = {
+                xmult = 3,
+                poker_hand = "Flush House"
+            }
+        },
+
+        loc_txt = {
+            name = "Pike",
+            text = {
+                "Gain {X:mult,C:white}X#1#{} mult when",
+                "playing a {C:attention}#2#{}"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            return {
+                vars = {
+                    card.ability.extra.xmult,
+                    localize(card.ability.extra.poker_hand, "poker_hands")
+                }
+            }
+        end,
+
+        calculate = function(self, card, context)
+            if context.joker_main
+                and context.poker_hands
+                and next(context.poker_hands[card.ability.extra.poker_hand]) then
+                return {
+                    xmult = card.ability.extra.xmult
+                }
+            end
+        end,
+
+        in_pool = function(self)
+            return true
+        end
+    }
+    -- Sea Butterfly
+
+    SMODS.Joker {
+        key = "SeaButterfly",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 5,
+        pos = { x = 1, y = 7 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
+
+        config = { extra = { size = 1, odds = 2 } },
+
+        loc_txt = {
+            name = "Sea Butterfly",
+            text = {
+                "{C:green}#1# in #2#{} chance to grant a random {C:spectral}edition{}",
+                "when playing a single card"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            info_queue[#info_queue + 1] = G.P_CENTERS.e_foil
+            info_queue[#info_queue + 1] = G.P_CENTERS.e_holo
+            info_queue[#info_queue + 1] = G.P_CENTERS.e_polychrome
+            return {
+                vars = {
+                    tostring(G.GAME and G.GAME.probabilities.normal or 1),
+                    tostring(card.ability.extra.odds or 2)
+                }
+            }
+        end,
+
+        calculate = function(self, card, context)
+            if context.joker_main and #context.full_hand == card.ability.extra.size then
+                local single_card = context.full_hand[1]
+
+                if pseudorandom("seabutterfly_edition") < ((G.GAME.probabilities.normal or 1) / (card.ability.extra.odds or 2)) then
+                    G.E_MANAGER:add_event(Event({
+                        trigger = "after",
+                        delay = 0.3,
+                        func = function()
+                            if single_card.edition then return true end
+
+                            local edition = poll_edition("seabutterfly_aura", nil, true, true, {
+                                "e_polychrome", "e_holo", "e_foil"
+                            })
+                            single_card:set_edition(edition, true)
+                            card:juice_up(0.3, 0.5)
+                            return true
+                        end
+                    }))
+                end
+            end
+        end,
+
+        in_pool = function(self)
+            return true
+        end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end
+    }
+    -- Barreleye
+
+
+
+
+
+    SMODS.Joker {
+        key = "Barreleye",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 6,
+        pos = { x = 6, y = 5 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
+
+        loc_txt = {
+            name = "Barreleye",
+            text = {
+                "Gain either a {C:dark_edition}negative{} tag or {C:spectral}orbital{} tag",
+                "whenever a {C:attention}Glass{} card is destroyed"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            info_queue[#info_queue + 1] = G.P_CENTERS.m_glass
+            return {
+                vars = {}
+            }
+        end,
+
+        calculate = function(self, card, context)
+            if context.remove_playing_cards and not context.blueprint then
+                local glass_count = 0
+                for _, removed_card in ipairs(context.removed or {}) do
+                    if removed_card.shattered or SMODS.has_enhancement(removed_card, "m_glass") then
+                        glass_count = glass_count + 1
+                    end
+                end
+
+                if glass_count > 0 then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            for i = 1, glass_count do
+                                local tag_key = pseudorandom("barreleye") < 0.5 and "tag_orbital" or "tag_negative"
+                                local tag = Tag(tag_key)
+                                tag:set_ability()
+
+                                if tag_key == "tag_orbital" then
+                                    local options = {}
+                                    for k, v in pairs(G.GAME.hands or {}) do
+                                        if v.visible then
+                                            options[#options + 1] = k
+                                        end
+                                    end
+                                    tag.ability.orbital_hand = pseudorandom_element(options, "barreleye_orbital")
+                                end
+
+                                add_tag(tag)
+                            end
+                            play_sound("glass1", 0.9 + math.random() * 0.1, 0.5)
+                            return true
+                        end
+                    }))
+                    return nil, true
+                end
+            end
+        end,
+
+        in_pool = function(self)
+            for _, playing_card in ipairs(G.playing_cards or {}) do
+                if SMODS.has_enhancement(playing_card, "m_glass") then
+                    return true
+                end
+            end
+            return false
+        end,
+
+        locked_loc_vars = function(self, info_queue, card)
+            return { vars = { 1, localize { type = "name_text", key = "m_glass", set = "Enhanced" } } }
+        end,
+
+        check_for_unlock = function(self, args)
+            if args.type == "modify_deck" then
+                local count = 0
+                for _, playing_card in ipairs(G.playing_cards or {}) do
+                    if SMODS.has_enhancement(playing_card, "m_glass") then
+                        count = count + 1
+                        if count >= 1 then
+                            return true
+                        end
+                    end
+                end
+            end
+            return false
+        end
+    }
+
+
+
+    SMODS.Joker {
+        key = "GiantTrevally",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 7,
+        pos = { x = 3, y = 6 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = false,
+        perishable_compat = false,
+
+        loc_txt = {
+            name = "Giant Trevally",
+            text = {
+                "Retrigger all {C:attention}Stone{} cards"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            info_queue[#info_queue + 1] = G.P_CENTERS.m_stone
+            return { vars = {} }
+        end,
+
+        calculate = function(self, card, context)
+            if context.repetition and context.cardarea == G.play and context.other_card and
+                SMODS.has_enhancement(context.other_card, "m_stone") then
+                return {
+                    repetitions = 1
+                }
+            end
+        end,
+
+        in_pool = function(self)
+            for _, c in ipairs(G.playing_cards or {}) do
+                if SMODS.has_enhancement(c, "m_stone") then
+                    return true
+                end
+            end
+            return false
+        end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end
+    }
+
+
+
+
+    -- Coelacanth
+
+    SMODS.Joker {
+        key = "Coelacanth",
+        atlas = "Jokers",
+        rarity = "AC_Fish",
+        cost = 5,
+        pos = { x = 9, y = 5 },
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = true,
+
+        config = { extra = { xmult = 3 } },
+
+        loc_txt = {
+            name = "Coelacanth",
+            text = {
+                "{C:attention}Stone{} cards",
+                "score for {X:mult,C:white}X3{} mult"
+            }
+        },
+
+        loc_vars = function(self, info_queue, card)
+            info_queue[#info_queue + 1] = G.P_CENTERS.m_stone
+            return {
+                vars = {
+                    card.ability.extra.xmult or 3
+                }
+            }
+        end,
+
+        calculate = function(self, card, context)
+            if context.individual
+                and context.cardarea == G.play
+                and SMODS.has_enhancement(context.other_card, "m_stone") then
+                return {
+                    xmult = card.ability.extra.xmult or 3
+                }
+            end
+        end,
+
+        in_pool = function(self)
+            for _, playing_card in ipairs(G.playing_cards or {}) do
+                if SMODS.has_enhancement(playing_card, "m_stone") then
+                    return true
+                end
+            end
+            return false
+        end,
+
+        check_for_unlock = function(self, args)
+            if args.type == "hand_contents" then
+                local tally = 0
+                for _, c in ipairs(args.cards) do
+                    if SMODS.has_enhancement(c, "m_stone") then
+                        tally = tally + 1
+                        if tally >= 5 then return true end
+                    end
+                end
+            end
+            return false
+        end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end
+    }
+
+
+    -- JOKERS END HERE
 end
 
-
+-- if config.moddedjokers == true then
+setup_jokers()
+-- end
 
 -- Consumable type for Fishing Rod
 SMODS.ConsumableType {
