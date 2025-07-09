@@ -676,7 +676,7 @@ function setup_jokers()
         loc_txt = {
             name = "Ranchu Goldfish",
             text = {
-                "Gain {C:money}$1{} when {C:attention}Face{} cards",
+                "Gives {C:money}$1{} when {C:attention}Face{} cards",
                 "are scored"
             }
         },
@@ -928,7 +928,7 @@ function setup_jokers()
         atlas = "Jokers",
         unlocked = true,
         discovered = true,
-        blueprint_compat = true,
+        blueprint_compat = false,
         eternal_compat = false,
         perishable_compat = false,
         rarity = "AC_Fish",
@@ -1060,7 +1060,7 @@ function setup_jokers()
         loc_txt = {
             name = "Freshwater Goby",
             text = {
-                "Gain {C:chips}+25{} Chips",
+                "Gives {C:chips}+25{} Chips",
                 "for each played card that wasn't scored"
             }
         },
@@ -1171,7 +1171,7 @@ function setup_jokers()
         atlas = 'Jokers',
         rarity = 'AC_Fish',
         cost = 8,
-        unlocked = false,
+        unlocked = true,
         blueprint_compat = true,
         eternal_compat = false,
         pos = { x = 3, y = 2 },
@@ -1188,7 +1188,7 @@ function setup_jokers()
             name = 'Tadpole',
             text = {
                 '{X:mult,C:white}X1.5{} Mult every round',
-                '{C:inactive}Becomes a {C:attention}Frog{} after 2 rounds'
+                'Becomes a {C:attention}Frog{} after 2 rounds'
             }
         },
 
@@ -1357,6 +1357,7 @@ function setup_jokers()
             name = "Butterfly Fish",
             text = {
                 '{C:money}$1{} per {C:attention}3{}{C:diamonds} Diamonds{} in full deck',
+                'at the end of round',
                 '{C:inactive}Currently {C:money}$#1#{}'
             }
         },
@@ -1426,7 +1427,7 @@ function setup_jokers()
         },
 
         loc_txt = {
-            name = "Bluegill Fish",
+            name = "Bluegill",
             text = {
                 'This Joker gains {C:chips}+3{} Chips when {C:clubs}Club{} cards are scored',
                 '{C:inactive}(Currently {C:chips}+#1#{} Chips)'
@@ -1763,7 +1764,17 @@ function setup_jokers()
                 }
             end
         end,
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
 
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end,
         in_pool = function(self)
             return true
         end
@@ -2150,7 +2161,7 @@ function setup_jokers()
 
         calculate = function(self, card, context)
             if context.first_hand_drawn then
-                local _card = SMODS.add_card { set = "Base", enhancement = "m_mult", rank = "King", edition = "e_holo", area = G.discard }
+                local _card = SMODS.create_card { set = "Base", enhancement = "m_mult", rank = "King", edition = "e_holo", area = G.discard }
 
                 G.E_MANAGER:add_event(Event({
                     func = function()
@@ -2762,9 +2773,9 @@ function setup_jokers()
         loc_txt = {
             name = "Moray Eel",
             text = {
-                "If a {C:attention}Straight{} is played:",
-                "{C:mult}+10 Mult{} and",
-                "Retrigger the {C:attention}first{} card scored {C:attention}1{} time"
+                "If a {C:attention}Straight{} is played",
+                "gain {C:mult}+10 Mult{} and",
+                "retrigger the {C:attention}first{} card scored {C:attention}1{} time"
             }
         },
 
@@ -2793,6 +2804,20 @@ function setup_jokers()
                 }
             end
         end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end,
+
+
 
         in_pool = function(self) return true end
     }
@@ -2854,6 +2879,20 @@ function setup_jokers()
                 }
             end
         end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
+            end
+        end,
+
+
 
         in_pool = function(self) return true end
     }
@@ -2982,12 +3021,12 @@ function setup_jokers()
         rarity = "AC_Fish",
         cost = 5,
         pos = { x = 8, y = 0 },
-        config = { extra = { chip = 25 } },
+        config = { extra = { chip = 10 } },
 
         loc_txt = {
             name = "Anchovy",
             text = {
-                'Gives {C:chips}+25{} Chips for each Joker you have',
+                '{C:chips}+10{} Chips for each Joker you have',
                 '{C:inactive}(Currently {C:chips}+#1#{} Chips)'
             }
         },
@@ -2996,7 +3035,7 @@ function setup_jokers()
             local count = G.jokers and #G.jokers.cards or 0
             return {
                 vars = {
-                    string.format("%d", (card.ability and card.ability.extra and card.ability.extra.chip or 25) * count)
+                    string.format("%d", (card.ability and card.ability.extra and card.ability.extra.chip or 10) * count)
                 }
             }
         end,
@@ -3931,7 +3970,7 @@ function setup_jokers()
         pos = { x = 3, y = 7 },
         unlocked = true,
         discovered = true,
-        blueprint_compat = true,
+        blueprint_compat = false,
         eternal_compat = true,
         perishable_compat = true,
 
@@ -4478,7 +4517,7 @@ function setup_jokers()
         loc_txt = {
             name = "Ocean Sunfish",
             text = {
-                "Gain {X:mult,C:white}X#1#{} mult when",
+                "{X:mult,C:white}X#1#{} mult when",
                 "playing a {C:attention}#2#{}"
             }
         },
@@ -4499,6 +4538,18 @@ function setup_jokers()
                 return {
                     xmult = card.ability.extra.xmult
                 }
+            end
+        end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
             end
         end,
 
@@ -4532,7 +4583,7 @@ function setup_jokers()
         loc_txt = {
             name = "Oar Fish",
             text = {
-                "Gain {X:mult,C:white}X#1#{} mult when",
+                "{X:mult,C:white}X#1#{} mult when",
                 "playing a {C:attention}#2#{}"
             }
         },
@@ -4553,6 +4604,19 @@ function setup_jokers()
                 return {
                     xmult = card.ability.extra.xmult
                 }
+            end
+        end,
+
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
             end
         end,
 
@@ -4586,7 +4650,7 @@ function setup_jokers()
         loc_txt = {
             name = "Pike",
             text = {
-                "Gain {X:mult,C:white}X#1#{} mult when",
+                "{X:mult,C:white}X#1#{} mult when",
                 "playing a {C:attention}#2#{}"
             }
         },
@@ -4607,6 +4671,18 @@ function setup_jokers()
                 return {
                     xmult = card.ability.extra.xmult
                 }
+            end
+        end,
+
+        add_to_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+            end
+        end,
+
+        remove_from_deck = function(self, card, from_debuff)
+            if G.jokers and G.jokers.config then
+                G.jokers.config.card_limit = math.max(1, G.jokers.config.card_limit - 1)
             end
         end,
 
@@ -4789,12 +4865,12 @@ function setup_jokers()
         eternal_compat = true,
         perishable_compat = true,
 
-        config = { extra = { chips = 1 } },
+        config = { extra = { chips = 2 } },
 
         loc_txt = {
             name = "Football Fish",
             text = {
-                "{C:chips}+1{} Chips",
+                "{C:chips}+2{} Chips",
                 "for each card not in your current {C:attention}deck{}",
                 "{C:inactive}(Currently {C:chips}+#1#{} Chips)"
             }
@@ -4802,7 +4878,7 @@ function setup_jokers()
 
         loc_vars = function(self, info_queue, card)
             local missing = 52 - ((G.deck and G.deck.cards) and #G.deck.cards or 0)
-            local current = missing * (card.ability.extra.chips or 1)
+            local current = missing * (card.ability.extra.chips or 2)
             return {
                 vars = { tostring(current) }
             }
@@ -4811,7 +4887,7 @@ function setup_jokers()
         calculate = function(self, card, context)
             if context.joker_main then
                 local missing = 52 - ((G.deck and G.deck.cards) and #G.deck.cards or 0)
-                local bonus = missing * (card.ability.extra.chips or 1)
+                local bonus = missing * (card.ability.extra.chips or 2)
                 if bonus > 0 then
                     return { chips = bonus }
                 end
@@ -6344,7 +6420,6 @@ local bait_card = SMODS.Consumable {
                 delay = 0.15,
                 func = function()
                     c:flip()
-                    play_sound('card2', 1.0 - i * 0.05)
                     c:juice_up(0.3, 0.3)
                     return true
                 end
@@ -6489,10 +6564,71 @@ SMODS.Booster {
 }
 
 
-
 SMODS.Booster {
     key = "go_fish_pack_2",
-    name = "Go Fish Pack 2",
+    name = "Go Fish Pack",
+    group_name = "Go Fish",
+    kind = "Go Fish",
+    cost = 1,
+    atlas = 'Extra',
+    config = { extra = 2, choose = 1 },
+    weight = 2,
+    pos = { x = 5, y = 0 },
+    draw_hand = true,
+    discovered = true,
+
+    loc_txt = {
+        group_name = "Go Fish",
+        name = "Medium Go Fish Pack",
+        text = {
+            "Choose {C:attention}1{} of {C:attention}2{}",
+            "{C:attention}Fishing Rods{} to go fishing for a random",
+            "{C:blue}Fish Joker{} to add to your deck."
+        }
+    },
+
+    ease_background_colour = function(self)
+        ease_background_colour_blind(G.STATES.SPECTRAL_PACK)
+    end,
+
+    particles = function(self)
+        G.booster_pack_sparkles = Particles(1, 1, 1, 1, {
+            timer = 0.2,
+            scale = 0.7,
+            initialize = true,
+            lifespan = 2,
+            speed = 0.07,
+            padding = -1,
+            attach = G.ROOM_ATTACH,
+            colours = {
+                G.C.BLUE,
+                lighten(G.C.WHITE, 0.6),
+                lighten(G.C.WHITE, 0.6),
+                lighten(G.C.BLUE, 0.6)
+            },
+            fill = true
+        })
+        G.booster_pack_sparkles.fade_alpha = 1
+        G.booster_pack_sparkles:fade(1, 0)
+    end,
+
+    create_card = function(self, card, i)
+        return {
+            set = "GO_FISH_RODS",
+            area = G.pack_cards,
+            skip_materialize = true,
+            soulable = false,
+            key_append = "go_fish"
+        }
+    end
+}
+
+
+
+
+SMODS.Booster {
+    key = "go_fish_pack_3",
+    name = "Go Fish Pack",
     group_name = "Go Fish",
     kind = "Go Fish",
     cost = 4,
@@ -6505,7 +6641,7 @@ SMODS.Booster {
 
     loc_txt = {
         group_name = "Go Fish",
-        name = "Go Fish Pack",
+        name = "Big Go Fish Pack",
         text = {
             "Choose {C:attention}1{} of {C:attention}3{}",
             "{C:attention}Fishing Rods{} to go fishing for a random",
