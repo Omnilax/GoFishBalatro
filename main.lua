@@ -1004,7 +1004,7 @@ function setup_jokers()
         loc_txt = {
             name = "Loach",
             text = {
-                "Gain {C:mult}+10{} Mult",
+                "Gives {C:mult}+10{} Mult",
                 "for each played card that wasn't scored"
             }
         },
@@ -1122,7 +1122,7 @@ function setup_jokers()
             name = "Nibblefish",
             text = {
                 "Cards played but not scored",
-                "gain {X:mult,C:white}X1.5{} Mult"
+                "give {X:mult,C:white}X1.5{} Mult"
             }
         },
 
@@ -1711,7 +1711,7 @@ function setup_jokers()
         loc_txt = {
             name = "Mud Crab",
             text = {
-                "{C:green}#1# in #2#{}, chance to gain a random {C:attention}tag{}",
+                "{C:green}#1# in #2#{}, chance to create a random {C:attention}tag{}",
                 "when you play a {C:attention}Two Pair{}"
             }
         },
@@ -1991,7 +1991,7 @@ function setup_jokers()
         loc_txt = {
             name = "Guppy",
             text = {
-                "Gain {C:money}$#1#{} at the end of the round",
+                "Gives {C:money}$#1#{} at the end of the round",
                 "for each {C:attention}Glass{} card in your hand"
             }
         },
@@ -2773,8 +2773,8 @@ function setup_jokers()
         loc_txt = {
             name = "Moray Eel",
             text = {
-                "If a {C:attention}Straight{} is played",
-                "gain {C:mult}+10 Mult{} and",
+                "When a {C:attention}Straight{} is played",
+                "{C:mult}+10 Mult{} and",
                 "retrigger the {C:attention}first{} card scored {C:attention}1{} time"
             }
         },
@@ -3298,7 +3298,7 @@ function setup_jokers()
         loc_txt = {
             name = "Mahi-Mahi",
             text = {
-                "Gain {C:chips}+#1#{} chips and {C:money}$#2#{}",
+                "Gives {C:chips}+#1#{} chips and {C:money}$#2#{}",
                 "when playing a {C:attention}Two Pair"
             }
         },
@@ -3553,7 +3553,7 @@ function setup_jokers()
         loc_txt = {
             name = "Char",
             text = {
-                "Gain {C:mult}+2{} mult when discarding a",
+                "Gains {C:mult}+2{} mult when discarding a",
                 "{C:attention}single{} card",
                 "{C:inactive}Currently {C:mult}+#1#{}"
             }
@@ -3737,7 +3737,7 @@ function setup_jokers()
             name = "Angelfish",
             text = {
                 "Played {C:attention}Diamond{} cards have a {C:green}#1# in #2#{} chance",
-                "to gain {C:mult}+#3#{} mult"
+                "to give {C:mult}+#3#{} mult"
             }
         },
 
@@ -4257,7 +4257,7 @@ function setup_jokers()
         loc_txt = {
             name = "Blowfish",
             text = {
-                "Gain {C:chips}+#1#{} chips",
+                "Gives {C:chips}+#1#{} chips",
                 "on the final hand of the round"
             }
         },
@@ -4314,7 +4314,7 @@ function setup_jokers()
         loc_txt = {
             name = "Sting Ray",
             text = {
-                "Gain {X:mult,C:white}X#1#{} when holding",
+                "{X:mult,C:white}X#1#{} when holding",
                 "{C:attention}#2#{} or more cards"
             }
         },
