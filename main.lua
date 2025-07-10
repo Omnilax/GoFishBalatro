@@ -1188,7 +1188,7 @@ function setup_jokers()
             name = 'Tadpole',
             text = {
                 '{X:mult,C:white}X1.5{} Mult every round',
-                'Becomes a {C:attention}Frog{} after 2 rounds'
+                'Sell after {C:attention}2{} rounds to become a {C:green}Frog{}'
             }
         },
 
@@ -1347,7 +1347,7 @@ function setup_jokers()
         blueprint_compat = true,
         eternal_compat = false,
         perishable_compat = false,
-        rarity = 'AC_Fish',
+        rarity = "AC_Fish",
         cost = 5,
         pos = { x = 0, y = 2 },
 
@@ -1356,9 +1356,9 @@ function setup_jokers()
         loc_txt = {
             name = "Butterfly Fish",
             text = {
-                '{C:money}$1{} per {C:attention}3{}{C:diamonds} Diamonds{} in full deck',
-                'at the end of round',
-                '{C:inactive}Currently {C:money}$#1#{}'
+                "{C:money}$1{} per {C:attention}3{}{C:diamonds} Diamonds{} in full deck",
+                "at the end of round",
+                "{C:inactive}Currently {C:money}$#1#{}"
             }
         },
 
@@ -1369,10 +1369,8 @@ function setup_jokers()
                     diamonds = diamonds + 1
                 end
             end
-            local payout = math.floor(diamonds / 3)
-            return {
-                vars = { tostring(payout) }
-            }
+            local payout = math.floor(diamonds / 3) -- ✅ accurate rounding
+            return { vars = { tostring(payout) } }
         end,
 
         calc_dollar_bonus = function(self, card)
@@ -1382,13 +1380,18 @@ function setup_jokers()
                     diamonds = diamonds + 1
                 end
             end
-            return math.floor(diamonds / 3)
+            return math.floor(diamonds / 3) -- ✅ only full sets yield dollars
         end,
 
-        in_pool = function(self)
-            return true
+        in_pool = function(self, args)
+            -- ✅ Only allow in shop if Fish Only deck is active
+            if args and args.source == "shop" then
+                return G.GAME
+                    and G.GAME.starting_params
+                    and G.GAME.starting_params.back == "b_fish_only"
+            end
+            return true -- ✅ allow in other contexts like Blueprint, effects, rewards
         end,
-
 
         add_to_deck = function(self, card, from_debuff)
             if G.jokers and G.jokers.config then
@@ -1402,7 +1405,6 @@ function setup_jokers()
             end
         end
     }
-
 
     -- Blue Gill
 
@@ -4787,7 +4789,8 @@ function setup_jokers()
             name = "Sea Butterfly",
             text = {
                 "{C:green}#1# in #2#{} chance to grant a random {C:spectral}edition{}",
-                "when playing a single card"
+                "when playing a single card",
+                "{C:inactive}Excluding{} {C:dark_edition}negative{}"
             }
         },
 
@@ -5116,8 +5119,6 @@ function setup_jokers()
                 card.ability.extra.xmult = (card.ability.extra.xmult or 1.0) + (card.ability.extra.xmult_gain or 0.1)
 
                 return {
-                    message = "Scale!",
-                    colour = G.C.XMULT
                 }
             end
 
@@ -5360,7 +5361,7 @@ function setup_jokers()
                 if unique_suits >= 4 then
                     card.ability.extra.xmult = (card.ability.extra.xmult or 2.0) + (card.ability.extra.gain or 0.5)
                     return {
-                        message = "Sparkle!",
+                        message = "Scale!",
                         colour = G.C.XMULT
                     }
                 end
